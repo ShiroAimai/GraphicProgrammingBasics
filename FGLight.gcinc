@@ -1,0 +1,60 @@
+#include "UnityCG.cginc"
+#include "Lighting.cginc"
+#include "AutoLight.cginc"
+
+struct MeshData
+{
+    float4 vertex : POSITION;
+    float2 uv : TEXCOORD0;
+    float3 normal : NORMAL;
+};
+
+struct Interpolators
+{
+    float4 vertex : SV_POSITION;
+    float2 uv : TEXCOORD0;
+    float3 normal : TEXCOORD1;
+    float3 wPos : TEXCOORD2;   
+    LIGHTING_COORDS(3,4)
+};
+
+sampler2D _MainTex;
+float4 _MainTex_ST;
+float _Gloss;
+float4 _SurfaceColor;
+
+Interpolators vert(MeshData v)
+{
+    Interpolators o;
+    o.vertex = UnityObjectToClipPos(v.vertex);
+    o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+    o.normal = UnityObjectToWorldNormal(v.normal);
+    o.wPos = mul(unity_ObjectToWorld, v.vertex);
+    TRANSFER_VERTEX_TO_FRAGMENT(o);
+    return o;
+}
+
+float4 frag(Interpolators i) : SV_Target
+{
+    //diffuse lighting
+    float3 n = normalize(i.normal); //out of surface //normalize in order to avoid artefactor from linear interpolation
+    float3 l = normalize(UnityWorldSpaceLightDir(i.wPos));
+    
+    float attenuation = LIGHT_ATTENUATION(i);
+    float3 lambert = saturate(dot(n, l));
+
+    float3 diffuseLight = (lambert * attenuation) *_LightColor0.xyz;
+
+    //specular
+    float3 view = normalize(_WorldSpaceCameraPos - i.wPos); //from surface to camera
+    float3 halfViewLight = normalize(l + view);
+    float3 specular = saturate(dot(halfViewLight, n)) * (lambert > 0); // blinn-phong
+
+    //adding glossyness
+    float GlossExp = exp2(_Gloss * 11) + 2;
+    specular = pow(specular, GlossExp) * _Gloss * attenuation; //specular exponent
+    
+    specular =* _LightColor0.xyz;
+
+    return float4(diffuseLight * _SurfaceColor + specularLight, 1.0);
+}

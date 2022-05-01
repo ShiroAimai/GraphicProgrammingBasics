@@ -1,0 +1,11 @@
+﻿# Default ignored files
+/shelf/
+/workspace.xml
+# Rider ignored files
+/.idea.Basics.iml
+/projectSettingsUpdater.xml
+/modules.xml
+/contentModel.xml
+# Datasource local storage ignored files
+/../../../../../../../../:\Game Dev Studies\Unity\Graphics\Basics\.idea\.idea.Basics\.idea/dataSources/
+/dataSources.local.xml
